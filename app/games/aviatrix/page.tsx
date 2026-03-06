@@ -14,7 +14,7 @@ export default function AviatrixPage() {
   const [history, setHistory] = useState<{ crashPoint: number; cashedOut: boolean; cashOutAt: number; amount: number }[]>([])
   const [planeX, setPlaneX] = useState(0)
   const [planeY, setPlaneY] = useState(0)
-  const [trail, setTrail] = useState<{ x: number; y: number }[]>([])
+  const [showResult, setShowResult] = useState(false)
   const animRef = useRef<number>(0)
   const startTimeRef = useRef(0)
 
@@ -34,9 +34,9 @@ export default function AviatrixPage() {
     setHasCashedOut(false)
     setCashOutMultiplier(0)
     setGameState("flying")
-    setPlaneX(0)
-    setPlaneY(0)
-    setTrail([])
+    setPlaneX(5)
+    setPlaneY(10)
+    setShowResult(false)
     setBalance((b) => parseFloat((b - betAmount).toFixed(2)))
     startTimeRef.current = Date.now()
   }, [betAmount, balance, generateCrashPoint])
@@ -62,6 +62,8 @@ export default function AviatrixPage() {
             ...h.slice(0, 19),
           ])
         }
+        // Show result after crash
+        setTimeout(() => setShowResult(true), 500)
         return
       }
 
@@ -69,11 +71,10 @@ export default function AviatrixPage() {
 
       // Update plane position (curve going up-right)
       const progress = Math.min(elapsed / 10, 1)
-      const px = progress * 85
-      const py = Math.min(progress * 70 + Math.sin(progress * Math.PI) * 15, 80)
+      const px = 5 + progress * 80
+      const py = 10 + Math.min(progress * 65 + Math.sin(progress * Math.PI) * 10, 75)
       setPlaneX(px)
       setPlaneY(py)
-      setTrail((prev) => [...prev.slice(-100), { x: px, y: py }])
 
       animRef.current = requestAnimationFrame(animate)
     }
@@ -106,13 +107,13 @@ export default function AviatrixPage() {
   }
 
   return (
-    <GameLayout title="Aviatrix" balance={balance}>
+    <GameLayout title="Lucky Jet" balance={balance}>
       <div className="flex flex-col gap-4">
         {/* Flight Area */}
-        <div className="bg-gradient-to-b from-[#0a0f1a] via-[#0f1923] to-[#1a2c38] rounded-2xl border border-border/50 relative overflow-hidden" style={{ height: 350 }}>
+        <div className="bg-gradient-to-b from-[#1a0a2e] via-[#0f1923] to-[#0a1520] rounded-2xl border border-border/50 relative overflow-hidden" style={{ height: 320 }}>
           {/* Stars background */}
           <div className="absolute inset-0">
-            {[...Array(50)].map((_, i) => (
+            {[...Array(40)].map((_, i) => (
               <div
                 key={i}
                 className="absolute rounded-full bg-white"
@@ -121,86 +122,86 @@ export default function AviatrixPage() {
                   height: Math.random() * 2 + 1,
                   left: `${Math.random() * 100}%`,
                   top: `${Math.random() * 100}%`,
-                  opacity: Math.random() * 0.5 + 0.1,
+                  opacity: Math.random() * 0.4 + 0.1,
                   animation: `pulse ${2 + Math.random() * 3}s ease-in-out infinite`,
                 }}
               />
             ))}
           </div>
 
-          {/* SVG Trail + Plane */}
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            {/* Grid lines */}
+          {/* Grid lines */}
+          <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
             {[20, 40, 60, 80].map((y) => (
-              <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#2a3f4e" strokeWidth="0.15" strokeDasharray="1,1" />
+              <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#4a5568" strokeWidth="0.1" strokeDasharray="2,2" />
             ))}
             {[20, 40, 60, 80].map((x) => (
-              <line key={x} x1={x} y1="0" x2={x} y2="100" stroke="#2a3f4e" strokeWidth="0.15" strokeDasharray="1,1" />
+              <line key={x} x1={x} y1="0" x2={x} y2="100" stroke="#4a5568" strokeWidth="0.1" strokeDasharray="2,2" />
             ))}
-
-            {/* Trail path */}
-            {trail.length > 1 && (
-              <>
-                <defs>
-                  <linearGradient id="trailGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#2ee06e" stopOpacity="0.1" />
-                    <stop offset="100%" stopColor={getMultiplierColor()} stopOpacity="0.8" />
-                  </linearGradient>
-                </defs>
-                <polyline
-                  points={trail.map((p) => `${p.x},${100 - p.y}`).join(" ")}
-                  fill="none"
-                  stroke="url(#trailGrad)"
-                  strokeWidth="0.5"
-                  strokeLinecap="round"
-                />
-                {/* Fill under curve */}
-                <polygon
-                  points={`${trail[0].x},100 ${trail.map((p) => `${p.x},${100 - p.y}`).join(" ")} ${trail[trail.length - 1].x},100`}
-                  fill={getMultiplierColor()}
-                  opacity="0.08"
-                />
-              </>
-            )}
           </svg>
 
-          {/* Plane */}
+          {/* Lucky Jet Character */}
           {gameState !== "waiting" && (
             <div
               className="absolute transition-all duration-100 ease-linear z-10"
               style={{
                 left: `${planeX}%`,
                 bottom: `${planeY}%`,
-                transform: `translate(-50%, 50%) rotate(-15deg)`,
-                opacity: gameState === "crashed" ? 0.3 : 1,
+                transform: `translate(-50%, 50%)`,
+                opacity: gameState === "crashed" && !hasCashedOut ? 0.4 : 1,
               }}
             >
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="drop-shadow-lg">
-                <path d="M35 18L8 8L12 18L8 28L35 18Z" fill="#00b4d8" stroke="#0097b2" strokeWidth="1" />
-                <path d="M12 18L4 16V20L12 18Z" fill="#0097b2" />
-                <circle cx="14" cy="18" r="2" fill="#0f1923" />
-                <path d="M20 12L24 8L26 10L22 14" fill="#00b4d8" opacity="0.7" />
-                <path d="M20 24L24 28L26 26L22 22" fill="#00b4d8" opacity="0.7" />
+              {/* Jetpack Man */}
+              <svg width="50" height="60" viewBox="0 0 50 60" fill="none" className="drop-shadow-lg">
+                {/* Body */}
+                <ellipse cx="25" cy="35" rx="10" ry="12" fill="#ffd93d" />
+                {/* Head */}
+                <circle cx="25" cy="18" r="10" fill="#ffcccb" />
+                {/* Helmet */}
+                <path d="M15 18 Q15 8 25 8 Q35 8 35 18" fill="#333" />
+                <path d="M17 15 Q17 10 25 10 Q33 10 33 15" fill="#00b4d8" opacity="0.6" />
+                {/* Goggles */}
+                <ellipse cx="21" cy="18" rx="4" ry="3" fill="#0f1923" />
+                <ellipse cx="29" cy="18" rx="4" ry="3" fill="#0f1923" />
+                <ellipse cx="21" cy="17.5" rx="2" ry="1.5" fill="#00b4d8" opacity="0.3" />
+                <ellipse cx="29" cy="17.5" rx="2" ry="1.5" fill="#00b4d8" opacity="0.3" />
+                {/* Jetpack */}
+                <rect x="12" y="28" width="6" height="16" rx="2" fill="#666" />
+                <rect x="32" y="28" width="6" height="16" rx="2" fill="#666" />
+                {/* Arms */}
+                <path d="M15 32 L8 38" stroke="#ffcccb" strokeWidth="3" strokeLinecap="round" />
+                <path d="M35 32 L42 38" stroke="#ffcccb" strokeWidth="3" strokeLinecap="round" />
+                {/* Legs */}
+                <path d="M20 47 L18 55" stroke="#333" strokeWidth="4" strokeLinecap="round" />
+                <path d="M30 47 L32 55" stroke="#333" strokeWidth="4" strokeLinecap="round" />
+                {/* Flames - only when flying and not cashed out */}
+                {gameState === "flying" && !hasCashedOut && (
+                  <>
+                    <ellipse cx="15" cy="48" rx="3" ry="8" fill="#ff6b35" opacity="0.9">
+                      <animate attributeName="ry" values="8;10;8" dur="0.15s" repeatCount="indefinite" />
+                    </ellipse>
+                    <ellipse cx="15" cy="48" rx="2" ry="6" fill="#ffd93d">
+                      <animate attributeName="ry" values="6;8;6" dur="0.15s" repeatCount="indefinite" />
+                    </ellipse>
+                    <ellipse cx="35" cy="48" rx="3" ry="8" fill="#ff6b35" opacity="0.9">
+                      <animate attributeName="ry" values="8;10;8" dur="0.15s" repeatCount="indefinite" />
+                    </ellipse>
+                    <ellipse cx="35" cy="48" rx="2" ry="6" fill="#ffd93d">
+                      <animate attributeName="ry" values="6;8;6" dur="0.15s" repeatCount="indefinite" />
+                    </ellipse>
+                  </>
+                )}
+                {/* Money bag */}
+                <ellipse cx="25" cy="40" rx="5" ry="4" fill="#2ee06e" />
+                <text x="25" y="42" textAnchor="middle" fontSize="5" fill="#0f1923" fontWeight="bold">$</text>
               </svg>
-              {/* Engine glow */}
-              {gameState === "flying" && !hasCashedOut && (
-                <div
-                  className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-3 rounded-full"
-                  style={{
-                    background: `radial-gradient(ellipse, #ffd93d, #ff6b6b00)`,
-                    opacity: 0.8,
-                    animation: "pulse 0.3s ease-in-out infinite",
-                  }}
-                />
-              )}
             </div>
           )}
 
-          {/* Multiplier Display */}
+          {/* Multiplier Display - Only show during flight, result shown after crash */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center">
             {gameState === "waiting" && (
               <div>
-                <p className="text-muted-foreground text-sm mb-2">Ожидание ставки...</p>
+                <p className="text-muted-foreground text-sm mb-2">{"Ожидание ставки..."}</p>
                 <p className="text-2xl font-black text-foreground">1.00x</p>
               </div>
             )}
@@ -214,22 +215,27 @@ export default function AviatrixPage() {
                 </p>
                 {hasCashedOut && (
                   <p className="text-lg font-bold text-[#ffd93d] mt-2">
-                    Забрано на {cashOutMultiplier.toFixed(2)}x
+                    {"Забрано на "}{cashOutMultiplier.toFixed(2)}x
                   </p>
                 )}
               </div>
             )}
-            {gameState === "crashed" && (
+            {gameState === "crashed" && showResult && (
               <div>
                 <p className="text-5xl sm:text-6xl font-black text-[#ff4757]">
                   {crashPoint.toFixed(2)}x
                 </p>
-                <p className="text-lg font-bold text-[#ff4757] mt-2">Улетел!</p>
+                <p className="text-lg font-bold text-[#ff4757] mt-2">{"Улетел!"}</p>
                 {hasCashedOut && (
                   <p className="text-sm font-bold text-[#2ee06e] mt-1">
-                    Вы забрали на {cashOutMultiplier.toFixed(2)}x (+{(betAmount * cashOutMultiplier - betAmount).toFixed(2)} ₽)
+                    {"Вы забрали на "}{cashOutMultiplier.toFixed(2)}x (+{(betAmount * cashOutMultiplier - betAmount).toFixed(2)} ₽)
                   </p>
                 )}
+              </div>
+            )}
+            {gameState === "crashed" && !showResult && (
+              <div>
+                <p className="text-4xl font-black text-[#ff4757] animate-pulse">...</p>
               </div>
             )}
           </div>
@@ -258,7 +264,7 @@ export default function AviatrixPage() {
         {/* Controls */}
         <div className="bg-card rounded-xl border border-border/50 p-4">
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Ставка</label>
+            <label className="text-xs text-muted-foreground mb-1 block">{"Ставка"}</label>
             <div className="flex items-center bg-secondary rounded-lg overflow-hidden">
               <input
                 type="number"
@@ -289,7 +295,7 @@ export default function AviatrixPage() {
               onClick={cashOut}
               className="w-full mt-4 bg-[#ffd93d] hover:bg-[#f5cc1b] text-[#0f1923] font-bold text-base py-3 rounded-xl transition-all animate-pulse"
             >
-              Забрать {(betAmount * multiplier).toFixed(2)} ₽ ({multiplier.toFixed(2)}x)
+              {"Забрать"} {(betAmount * multiplier).toFixed(2)} ₽ ({multiplier.toFixed(2)}x)
             </button>
           ) : (
             <button
@@ -301,31 +307,6 @@ export default function AviatrixPage() {
             </button>
           )}
         </div>
-
-        {/* History table */}
-        {history.length > 0 && (
-          <div className="bg-card rounded-xl border border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3">История</h3>
-            <div className="flex flex-col gap-2">
-              {history.slice(0, 10).map((h, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm ${
-                    h.cashedOut ? "bg-[#2ee06e]/10 text-[#2ee06e]" : "bg-destructive/10 text-destructive"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">{h.crashPoint.toFixed(2)}x</span>
-                    {h.cashedOut && <span className="text-xs opacity-70">({h.cashOutAt.toFixed(2)}x)</span>}
-                  </div>
-                  <span className="font-bold">
-                    {h.amount > 0 ? "+" : ""}{h.amount.toFixed(2)} ₽
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </GameLayout>
   )

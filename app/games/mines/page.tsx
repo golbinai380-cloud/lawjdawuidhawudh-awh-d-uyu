@@ -138,12 +138,12 @@ export default function MinesPage() {
                     : cell === "gem"
                       ? "bg-[#2ee06e]/15 border-2 border-[#2ee06e]/40 scale-[0.97]"
                       : hitBomb === i
-                        ? "bg-[#ff4757]/30 border-2 border-[#ff4757]/60 scale-[0.97] animate-pulse"
+                        ? "bg-[#ff4757]/30 border-2 border-[#ff4757]/60 scale-[0.97]"
                         : "bg-[#ff4757]/10 border border-[#ff4757]/20 scale-[0.97]"
                 }`}
               >
                 {cell === "gem" && (
-                  <Image src={GEM_ICON} alt="Gem" width={48} height={48} className="w-9 h-9 sm:w-12 sm:h-12 drop-shadow-lg" />
+                  <Image src={GEM_ICON} alt="Gem" width={48} height={48} className="w-full h-full p-1.5 sm:p-2 drop-shadow-lg object-contain" />
                 )}
                 {cell === "bomb" && (
                   <Image
@@ -151,7 +151,7 @@ export default function MinesPage() {
                     alt="Bomb"
                     width={48}
                     height={48}
-                    className={`w-9 h-9 sm:w-12 sm:h-12 drop-shadow-lg ${hitBomb === i ? "animate-bounce" : ""}`}
+                    className="w-full h-full p-1.5 sm:p-2 drop-shadow-lg object-contain"
                   />
                 )}
                 {cell === "hidden" && gameActive && (

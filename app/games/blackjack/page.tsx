@@ -23,10 +23,10 @@ const suitSymbols: Record<CardSuit, string> = {
 }
 
 const suitColors: Record<CardSuit, string> = {
-  hearts: "#ff4757",
-  diamonds: "#ff4757",
-  clubs: "#e8edf2",
-  spades: "#e8edf2",
+  hearts: "#dc2626",
+  diamonds: "#dc2626",
+  clubs: "#1e293b",
+  spades: "#1e293b",
 }
 
 function createDeck(): Card[] {
@@ -72,41 +72,106 @@ function getHandValue(cards: Card[]): number {
   return total
 }
 
+// Realistic card component
 function CardComponent({ card, animDelay = 0 }: { card: Card; animDelay?: number }) {
   if (card.hidden) {
     return (
       <div
-        className="w-20 h-28 sm:w-24 sm:h-34 rounded-xl border-2 border-[#2a3f4e] flex items-center justify-center"
+        className="w-16 h-24 sm:w-20 sm:h-28 rounded-lg relative overflow-hidden shadow-lg"
         style={{
-          background: "repeating-linear-gradient(45deg, #1a2c38, #1a2c38 5px, #213743 5px, #213743 10px)",
           animationDelay: `${animDelay}ms`,
+          background: "linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #172554 100%)",
         }}
       >
-        <div className="w-10 h-14 rounded-lg border border-[#2ee06e]/30 bg-[#0f1923]/50" />
+        {/* Card back pattern */}
+        <div className="absolute inset-1 rounded border border-blue-400/30">
+          <div 
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 4px,
+                rgba(255,255,255,0.03) 4px,
+                rgba(255,255,255,0.03) 8px
+              )`,
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <span className="text-blue-300 text-lg font-bold">P</span>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   const color = suitColors[card.suit]
   const symbol = suitSymbols[card.suit]
+  const isRed = card.suit === "hearts" || card.suit === "diamonds"
+
+  // Get face card design
+  const getFaceCardDesign = () => {
+    if (!["J", "Q", "K"].includes(card.value)) return null
+    
+    const faceColors = {
+      J: { primary: "#fbbf24", secondary: "#d97706" },
+      Q: { primary: "#f472b6", secondary: "#db2777" },
+      K: { primary: "#fbbf24", secondary: "#d97706" },
+    }
+    const colors = faceColors[card.value as "J" | "Q" | "K"]
+    
+    return (
+      <div className="absolute inset-3 flex items-center justify-center">
+        <div 
+          className="w-10 h-14 sm:w-12 sm:h-16 rounded-sm flex items-center justify-center"
+          style={{ 
+            background: `linear-gradient(180deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+            boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3)'
+          }}
+        >
+          <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">{card.value}</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
-      className="w-20 h-28 sm:w-24 sm:h-34 rounded-xl border-2 border-[#2a3f4e] bg-[#0f1923] flex flex-col justify-between p-1.5 sm:p-2 relative overflow-hidden select-none"
+      className="w-16 h-24 sm:w-20 sm:h-28 rounded-lg bg-white relative overflow-hidden shadow-xl border border-gray-200"
       style={{ animationDelay: `${animDelay}ms` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
-      <div className="flex flex-col items-start relative z-10">
-        <span className="text-sm sm:text-base font-black leading-none" style={{ color }}>{card.value}</span>
+      {/* Card texture */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-gray-100" />
+      
+      {/* Top left corner */}
+      <div className="absolute top-1 left-1.5 flex flex-col items-center z-10">
+        <span className="text-xs sm:text-sm font-bold leading-none" style={{ color }}>{card.value}</span>
         <span className="text-xs sm:text-sm leading-none" style={{ color }}>{symbol}</span>
       </div>
-      <div className="flex items-center justify-center relative z-10">
-        <span className="text-2xl sm:text-3xl" style={{ color }}>{symbol}</span>
-      </div>
-      <div className="flex flex-col items-end relative z-10 rotate-180">
-        <span className="text-sm sm:text-base font-black leading-none" style={{ color }}>{card.value}</span>
+      
+      {/* Center symbol or face design */}
+      {["J", "Q", "K"].includes(card.value) ? (
+        getFaceCardDesign()
+      ) : card.value === "A" ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-4xl sm:text-5xl" style={{ color }}>{symbol}</span>
+        </div>
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-2xl sm:text-3xl" style={{ color }}>{symbol}</span>
+        </div>
+      )}
+      
+      {/* Bottom right corner (rotated) */}
+      <div className="absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 z-10">
+        <span className="text-xs sm:text-sm font-bold leading-none" style={{ color }}>{card.value}</span>
         <span className="text-xs sm:text-sm leading-none" style={{ color }}>{symbol}</span>
       </div>
+      
+      {/* Subtle border inner effect */}
+      <div className="absolute inset-0.5 rounded-md border border-gray-200/50 pointer-events-none" />
     </div>
   )
 }
@@ -265,18 +330,37 @@ export default function BlackJackPage() {
 
   return (
     <GameLayout title="BlackJack" balance={balance}>
-      <div className="flex flex-col gap-4">
-        {/* Game Table */}
-        <div className="bg-[#0d4d2c] rounded-2xl border-4 border-[#1a6b3f] p-4 sm:p-6 min-h-[400px] flex flex-col justify-between relative overflow-hidden">
+      <div className="flex flex-col gap-3">
+        {/* Game Table - Casino Style */}
+        <div 
+          className="rounded-2xl border-4 border-[#8b5a2b] p-3 sm:p-5 min-h-[380px] flex flex-col justify-between relative overflow-hidden"
+          style={{
+            background: "radial-gradient(ellipse at center, #0d6e3f 0%, #0a5c34 40%, #084d2a 70%, #063d22 100%)",
+            boxShadow: "inset 0 0 60px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.5)",
+          }}
+        >
+          {/* Table border decoration */}
+          <div className="absolute inset-2 rounded-xl border-2 border-[#ffd93d]/20 pointer-events-none" />
+          
           {/* Green felt texture overlay */}
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, #000 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          <div 
+            className="absolute inset-0 opacity-30 pointer-events-none" 
+            style={{ 
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`,
+            }} 
+          />
+          
+          {/* BLACKJACK text on table */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <span className="text-2xl sm:text-4xl font-black text-[#ffd93d]/10 tracking-[0.3em]">BLACKJACK</span>
+          </div>
 
           {/* Dealer Section */}
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-white/80">Дилер</span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">{"Дилер"}</span>
               {dealerHand.length > 0 && (
-                <span className="bg-black/30 px-2 py-0.5 rounded text-xs font-bold text-white">
+                <span className="bg-black/40 px-2 py-0.5 rounded text-xs font-bold text-white">
                   {getHandValue(dealerHand)}
                 </span>
               )}
@@ -286,8 +370,8 @@ export default function BlackJackPage() {
                 <CardComponent key={i} card={card} animDelay={i * 150} />
               ))}
               {dealerHand.length === 0 && (
-                <div className="w-20 h-28 sm:w-24 sm:h-34 rounded-xl border-2 border-dashed border-white/20 flex items-center justify-center">
-                  <span className="text-white/30 text-xs">Карты</span>
+                <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center">
+                  <span className="text-white/30 text-xs">{"Карты"}</span>
                 </div>
               )}
             </div>
@@ -295,8 +379,8 @@ export default function BlackJackPage() {
 
           {/* Message */}
           {message && (
-            <div className="relative z-10 text-center py-4">
-              <div className={`inline-block px-6 py-3 rounded-xl font-bold text-lg ${
+            <div className="relative z-10 text-center py-3">
+              <div className={`inline-block px-5 py-2.5 rounded-xl font-bold text-base ${
                 winAmount > betAmount
                   ? "bg-[#2ee06e]/20 text-[#2ee06e] border border-[#2ee06e]/40"
                   : winAmount > 0
@@ -305,7 +389,7 @@ export default function BlackJackPage() {
               }`}>
                 {message}
                 {winAmount > 0 && (
-                  <div className="text-sm mt-1">+{(winAmount - betAmount).toFixed(2)} ₽</div>
+                  <div className="text-sm mt-0.5">+{(winAmount - betAmount).toFixed(2)} ₽</div>
                 )}
               </div>
             </div>
@@ -313,10 +397,10 @@ export default function BlackJackPage() {
 
           {/* Player Section */}
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-white/80">Вы</span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">{"Вы"}</span>
               {playerHand.length > 0 && (
-                <span className="bg-black/30 px-2 py-0.5 rounded text-xs font-bold text-[#2ee06e]">
+                <span className="bg-black/40 px-2 py-0.5 rounded text-xs font-bold text-[#2ee06e]">
                   {getHandValue(playerHand)}
                 </span>
               )}
@@ -326,8 +410,8 @@ export default function BlackJackPage() {
                 <CardComponent key={i} card={card} animDelay={i * 150} />
               ))}
               {playerHand.length === 0 && (
-                <div className="w-20 h-28 sm:w-24 sm:h-34 rounded-xl border-2 border-dashed border-white/20 flex items-center justify-center">
-                  <span className="text-white/30 text-xs">Карты</span>
+                <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center">
+                  <span className="text-white/30 text-xs">{"Карты"}</span>
                 </div>
               )}
             </div>
@@ -335,11 +419,11 @@ export default function BlackJackPage() {
         </div>
 
         {/* Controls */}
-        <div className="bg-card rounded-xl border border-border/50 p-4">
+        <div className="bg-card rounded-xl border border-border/50 p-3 sm:p-4">
           {gameState === "betting" || gameState === "finished" ? (
             <>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Ставка</label>
+                <label className="text-xs text-muted-foreground mb-1 block">{"Ставка"}</label>
                 <div className="flex items-center bg-secondary rounded-lg overflow-hidden">
                   <input
                     type="number"
@@ -364,31 +448,31 @@ export default function BlackJackPage() {
               <button
                 onClick={deal}
                 disabled={betAmount <= 0 || betAmount > balance}
-                className="w-full mt-4 bg-[#2ee06e] hover:bg-[#25c45c] disabled:bg-secondary disabled:text-muted-foreground text-[#0f1923] font-bold text-base py-3 rounded-xl transition-all glow-green"
+                className="w-full mt-3 bg-[#2ee06e] hover:bg-[#25c45c] disabled:bg-secondary disabled:text-muted-foreground text-[#0f1923] font-bold text-base py-3 rounded-xl transition-all glow-green"
               >
-                Раздать
+                {"Раздать"}
               </button>
             </>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={hit}
                 className="bg-[#2ee06e] hover:bg-[#25c45c] text-[#0f1923] font-bold text-sm py-3 rounded-xl transition-all"
               >
-                Ещё
+                {"Ещё"}
               </button>
               <button
                 onClick={() => stand()}
                 className="bg-[#ff4757] hover:bg-[#ee3a4a] text-white font-bold text-sm py-3 rounded-xl transition-all"
               >
-                Стоп
+                {"Стоп"}
               </button>
               <button
                 onClick={doubleDown}
                 disabled={betAmount > balance}
                 className="bg-[#ffd93d] hover:bg-[#f5cc1b] disabled:bg-secondary disabled:text-muted-foreground text-[#0f1923] font-bold text-sm py-3 rounded-xl transition-all"
               >
-                x2
+                {"x2"}
               </button>
             </div>
           )}
@@ -396,17 +480,17 @@ export default function BlackJackPage() {
 
         {/* History */}
         {history.length > 0 && (
-          <div className="bg-card rounded-xl border border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3">История</h3>
-            <div className="flex flex-col gap-2">
-              {history.slice(0, 10).map((h, i) => (
+          <div className="bg-card rounded-xl border border-border/50 p-3 sm:p-4">
+            <h3 className="text-sm font-semibold text-foreground mb-2">{"История"}</h3>
+            <div className="flex flex-col gap-1.5">
+              {history.slice(0, 8).map((h, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm ${
+                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs ${
                     h.won ? "bg-[#2ee06e]/10 text-[#2ee06e]" : h.amount === 0 ? "bg-[#ffd93d]/10 text-[#ffd93d]" : "bg-destructive/10 text-destructive"
                   }`}
                 >
-                  <span>Вы: {h.playerScore} | Дилер: {h.dealerScore}</span>
+                  <span>{"Вы:"} {h.playerScore} | {"Дилер:"} {h.dealerScore}</span>
                   <span className="font-bold">
                     {h.amount > 0 ? "+" : ""}{h.amount.toFixed(2)} ₽
                   </span>

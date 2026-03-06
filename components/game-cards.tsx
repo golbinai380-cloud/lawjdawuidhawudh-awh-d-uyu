@@ -41,15 +41,9 @@ const games = [
     href: "/games/roulette",
   },
   {
-    id: "bubbles",
-    name: "Bubbles",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bubbles-YREekImFvq10eoxh8af75t8yopCsH1.png",
-    href: "/games/bubbles",
-  },
-  {
     id: "aviatrix",
     name: "Aviatrix",
-    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/aviatrix-meR1A54xdc8dl9PjJ5qxSrBJEuqJsg.jpg",
+    image: "/images/lucky-jet.jpg",
     href: "/games/aviatrix",
   },
 ]

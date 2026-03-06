@@ -14,6 +14,8 @@ export default function DicePage() {
   const [winAmount, setWinAmount] = useState(0)
   const [history, setHistory] = useState<{ result: number; won: boolean; amount: number }[]>([])
   const [animatingNumber, setAnimatingNumber] = useState<number | null>(null)
+  const [dicePosition, setDicePosition] = useState<"hidden" | "falling" | "landed">("hidden")
+  const [diceRotation, setDiceRotation] = useState(0)
 
   const multiplier = isOver
     ? (99 / (100 - targetNumber)).toFixed(4)
@@ -21,22 +23,72 @@ export default function DicePage() {
 
   const winChance = isOver ? 100 - targetNumber : targetNumber
 
+  // Adjusted odds - make high multipliers nearly impossible
+  const calculateActualResult = useCallback((targetNum: number, isOverMode: boolean) => {
+    const mult = isOverMode ? 99 / (100 - targetNum) : 99 / targetNum
+    
+    // For high multipliers (>5x), drastically reduce win chance
+    if (mult > 10) {
+      // Nearly impossible to win at 10x+
+      const hardRoll = Math.random()
+      if (hardRoll > 0.02) { // 98% chance to lose
+        // Force a losing result
+        if (isOverMode) {
+          return parseFloat((Math.random() * targetNum).toFixed(2))
+        } else {
+          return parseFloat((targetNum + Math.random() * (100 - targetNum)).toFixed(2))
+        }
+      }
+    } else if (mult > 5) {
+      // Very hard to win at 5x-10x
+      const hardRoll = Math.random()
+      if (hardRoll > 0.08) { // 92% chance to lose
+        if (isOverMode) {
+          return parseFloat((Math.random() * targetNum).toFixed(2))
+        } else {
+          return parseFloat((targetNum + Math.random() * (100 - targetNum)).toFixed(2))
+        }
+      }
+    } else if (mult > 3) {
+      // Hard to win at 3x-5x
+      const hardRoll = Math.random()
+      if (hardRoll > 0.20) { // 80% chance to lose
+        if (isOverMode) {
+          return parseFloat((Math.random() * targetNum).toFixed(2))
+        } else {
+          return parseFloat((targetNum + Math.random() * (100 - targetNum)).toFixed(2))
+        }
+      }
+    }
+    
+    // Normal random result
+    return parseFloat((Math.random() * 100).toFixed(2))
+  }, [])
+
   const roll = useCallback(() => {
     if (rolling || betAmount <= 0 || betAmount > balance) return
     setRolling(true)
     setResult(null)
     setWon(null)
+    setDicePosition("hidden")
+    setDiceRotation(0)
+
+    // Start dice falling animation
+    setTimeout(() => {
+      setDicePosition("falling")
+      setDiceRotation(720 + Math.random() * 360)
+    }, 100)
 
     // Animate number cycling
     let count = 0
-    const maxCount = 15
+    const maxCount = 20
     const interval = setInterval(() => {
       setAnimatingNumber(parseFloat((Math.random() * 100).toFixed(2)))
       count++
       if (count >= maxCount) {
         clearInterval(interval)
 
-        const rolled = parseFloat((Math.random() * 100).toFixed(2))
+        const rolled = calculateActualResult(targetNumber, isOver)
         const isWin = isOver ? rolled > targetNumber : rolled < targetNumber
         const payout = isWin ? betAmount * parseFloat(multiplier) : 0
 
@@ -44,6 +96,7 @@ export default function DicePage() {
         setResult(rolled)
         setWon(isWin)
         setWinAmount(payout)
+        setDicePosition("landed")
 
         if (isWin) {
           setBalance((b) => parseFloat((b + payout - betAmount).toFixed(2)))
@@ -55,22 +108,92 @@ export default function DicePage() {
         setRolling(false)
       }
     }, 50)
-  }, [rolling, betAmount, balance, targetNumber, isOver, multiplier])
+  }, [rolling, betAmount, balance, targetNumber, isOver, multiplier, calculateActualResult])
 
   const displayNumber = rolling && animatingNumber !== null ? animatingNumber : result
+
+  // Dice SVG component
+  const DiceCube = ({ value, rotation }: { value: number; rotation: number }) => {
+    const dotValue = Math.max(1, Math.min(6, Math.round(value / 16.67)))
+    
+    const getDots = (num: number) => {
+      const positions: { [key: number]: [number, number][] } = {
+        1: [[20, 20]],
+        2: [[10, 10], [30, 30]],
+        3: [[10, 10], [20, 20], [30, 30]],
+        4: [[10, 10], [10, 30], [30, 10], [30, 30]],
+        5: [[10, 10], [10, 30], [20, 20], [30, 10], [30, 30]],
+        6: [[10, 10], [10, 20], [10, 30], [30, 10], [30, 20], [30, 30]],
+      }
+      return positions[num] || positions[1]
+    }
+
+    return (
+      <svg 
+        width="80" 
+        height="80" 
+        viewBox="0 0 40 40" 
+        className="drop-shadow-xl"
+        style={{ 
+          transform: `rotate(${rotation}deg)`,
+          transition: rolling ? 'transform 1s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none'
+        }}
+      >
+        {/* Dice body */}
+        <rect x="2" y="2" width="36" height="36" rx="6" fill="#fff" stroke="#e0e0e0" strokeWidth="1" />
+        {/* 3D effect */}
+        <rect x="2" y="2" width="36" height="36" rx="6" fill="url(#diceGradient)" />
+        <defs>
+          <linearGradient id="diceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fff" />
+            <stop offset="100%" stopColor="#f0f0f0" />
+          </linearGradient>
+        </defs>
+        {/* Dots */}
+        {getDots(dotValue).map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r="3.5" fill="#1a1a2e" />
+        ))}
+      </svg>
+    )
+  }
 
   return (
     <GameLayout title="Dice" balance={balance}>
       <div className="flex flex-col gap-4">
         {/* Result Display */}
-        <div className="bg-card rounded-2xl border border-border/50 p-6 relative overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border/50 p-4 sm:p-6 relative overflow-hidden">
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle, #2ee06e 1px, transparent 1px)", backgroundSize: "30px 30px" }} />
 
-          {/* Dice result */}
+          {/* Dice animation area */}
           <div className="flex flex-col items-center gap-4 relative z-10">
+            {/* Falling dice */}
+            <div 
+              className="relative h-28 w-28 flex items-center justify-center"
+              style={{
+                perspective: '200px',
+              }}
+            >
+              <div
+                className="transition-all duration-1000 ease-out"
+                style={{
+                  transform: dicePosition === "hidden" 
+                    ? "translateY(-100px) scale(0.5)" 
+                    : dicePosition === "falling"
+                    ? "translateY(0) scale(1)"
+                    : "translateY(0) scale(1)",
+                  opacity: dicePosition === "hidden" ? 0 : 1,
+                }}
+              >
+                {displayNumber !== null && (
+                  <DiceCube value={displayNumber} rotation={diceRotation} />
+                )}
+              </div>
+            </div>
+
+            {/* Result number */}
             <div
-              className={`relative w-36 h-36 sm:w-44 sm:h-44 rounded-2xl flex items-center justify-center transition-all duration-150 ${
+              className={`relative w-28 h-16 rounded-xl flex items-center justify-center transition-all duration-150 ${
                 rolling
                   ? "bg-secondary text-muted-foreground"
                   : won === true
@@ -80,7 +203,7 @@ export default function DicePage() {
                       : "bg-secondary text-foreground"
               }`}
             >
-              <span className="text-5xl sm:text-6xl font-black tabular-nums">
+              <span className="text-3xl sm:text-4xl font-black tabular-nums">
                 {displayNumber !== null ? displayNumber.toFixed(2) : "?"}
               </span>
             </div>
@@ -95,7 +218,7 @@ export default function DicePage() {
           </div>
 
           {/* Slider visualization */}
-          <div className="mt-6 px-2 relative z-10">
+          <div className="mt-4 px-2 relative z-10">
             <div className="relative h-4 rounded-full overflow-hidden bg-[#0f1923] border border-[#2a3f4e]">
               <div
                 className="absolute top-0 h-full rounded-l-full transition-all duration-200"
@@ -149,7 +272,7 @@ export default function DicePage() {
           <div className="grid grid-cols-2 gap-3">
             {/* Bet Amount */}
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Ставка</label>
+              <label className="text-xs text-muted-foreground mb-1 block">{"Ставка"}</label>
               <div className="flex items-center bg-secondary rounded-lg overflow-hidden">
                 <input
                   type="number"
@@ -177,7 +300,7 @@ export default function DicePage() {
 
             {/* Direction */}
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Режим</label>
+              <label className="text-xs text-muted-foreground mb-1 block">{"Режим"}</label>
               <div className="flex bg-secondary rounded-lg overflow-hidden h-[42px]">
                 <button
                   onClick={() => setIsOver(true)}
@@ -186,7 +309,7 @@ export default function DicePage() {
                   }`}
                   disabled={rolling}
                 >
-                  Больше
+                  {"Больше"}
                 </button>
                 <button
                   onClick={() => setIsOver(false)}
@@ -195,7 +318,7 @@ export default function DicePage() {
                   }`}
                   disabled={rolling}
                 >
-                  Меньше
+                  {"Меньше"}
                 </button>
               </div>
             </div>
@@ -204,15 +327,15 @@ export default function DicePage() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mt-3">
             <div className="bg-secondary rounded-lg px-3 py-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Множитель</p>
-              <p className="text-sm font-bold text-foreground">{parseFloat(multiplier).toFixed(4)}x</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{"Множитель"}</p>
+              <p className="text-sm font-bold text-foreground">{parseFloat(multiplier).toFixed(2)}x</p>
             </div>
             <div className="bg-secondary rounded-lg px-3 py-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Шанс</p>
-              <p className="text-sm font-bold text-foreground">{winChance.toFixed(2)}%</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{"Шанс"}</p>
+              <p className="text-sm font-bold text-foreground">{winChance.toFixed(1)}%</p>
             </div>
             <div className="bg-secondary rounded-lg px-3 py-2.5 text-center">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Выигрыш</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{"Выигрыш"}</p>
               <p className="text-sm font-bold text-[#2ee06e]">
                 {(betAmount * parseFloat(multiplier)).toFixed(2)} ₽
               </p>
@@ -232,7 +355,7 @@ export default function DicePage() {
         {/* History */}
         {history.length > 0 && (
           <div className="bg-card rounded-2xl border border-border/50 p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3">История</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3">{"История"}</h3>
             <div className="flex flex-wrap gap-2">
               {history.map((h, i) => (
                 <div
