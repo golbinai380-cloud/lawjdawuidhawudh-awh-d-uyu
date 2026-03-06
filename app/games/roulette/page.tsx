@@ -1,0 +1,326 @@
+"use client"
+
+import { useState, useCallback } from "react"
+import GameLayout from "@/components/game-layout"
+
+type BetType = "red" | "black" | "green" | "odd" | "even" | "1-18" | "19-36" | "1-12" | "13-24" | "25-36" | number
+
+const ROULETTE_NUMBERS = [
+  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5,
+  24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26,
+]
+
+const RED_NUMBERS = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
+
+function getNumberColor(num: number): "red" | "black" | "green" {
+  if (num === 0) return "green"
+  return RED_NUMBERS.includes(num) ? "red" : "black"
+}
+
+const colorMap = {
+  red: "#ff4757",
+  black: "#1a1a2e",
+  green: "#2ee06e",
+}
+
+export default function RoulettePage() {
+  const [balance, setBalance] = useState(1000)
+  const [betAmount, setBetAmount] = useState(10)
+  const [spinning, setSpinning] = useState(false)
+  const [result, setResult] = useState<number | null>(null)
+  const [rotation, setRotation] = useState(0)
+  const [bets, setBets] = useState<{ type: BetType; amount: number }[]>([])
+  const [lastWin, setLastWin] = useState<number | null>(null)
+  const [history, setHistory] = useState<{ number: number; color: string }[]>([])
+  const [selectedBetType, setSelectedBetType] = useState<BetType>("red")
+
+  const placeBet = useCallback(() => {
+    if (betAmount <= 0 || betAmount > balance || spinning) return
+    setBets((prev) => {
+      const existing = prev.find((b) => b.type === selectedBetType)
+      if (existing) {
+        return prev.map((b) => (b.type === selectedBetType ? { ...b, amount: b.amount + betAmount } : b))
+      }
+      return [...prev, { type: selectedBetType, amount: betAmount }]
+    })
+  }, [betAmount, balance, spinning, selectedBetType])
+
+  const clearBets = useCallback(() => {
+    if (spinning) return
+    setBets([])
+  }, [spinning])
+
+  const totalBet = bets.reduce((sum, b) => sum + b.amount, 0)
+
+  const spin = useCallback(() => {
+    if (spinning || bets.length === 0 || totalBet > balance) return
+    setSpinning(true)
+    setResult(null)
+    setLastWin(null)
+    setBalance((b) => parseFloat((b - totalBet).toFixed(2)))
+
+    // Pick random number
+    const winNumber = ROULETTE_NUMBERS[Math.floor(Math.random() * ROULETTE_NUMBERS.length)]
+    const winIndex = ROULETTE_NUMBERS.indexOf(winNumber)
+    const segAngle = 360 / ROULETTE_NUMBERS.length
+    const spins = 5 + Math.floor(Math.random() * 3)
+    const targetAngle = 360 * spins + (360 - winIndex * segAngle - segAngle / 2)
+
+    setRotation((prev) => prev + targetAngle)
+
+    setTimeout(() => {
+      setResult(winNumber)
+      const winColor = getNumberColor(winNumber)
+
+      // Calculate winnings
+      let totalWinnings = 0
+      for (const bet of bets) {
+        if (typeof bet.type === "number") {
+          if (bet.type === winNumber) totalWinnings += bet.amount * 36
+        } else if (bet.type === "red") {
+          if (winColor === "red") totalWinnings += bet.amount * 2
+        } else if (bet.type === "black") {
+          if (winColor === "black") totalWinnings += bet.amount * 2
+        } else if (bet.type === "green") {
+          if (winNumber === 0) totalWinnings += bet.amount * 36
+        } else if (bet.type === "odd") {
+          if (winNumber !== 0 && winNumber % 2 !== 0) totalWinnings += bet.amount * 2
+        } else if (bet.type === "even") {
+          if (winNumber !== 0 && winNumber % 2 === 0) totalWinnings += bet.amount * 2
+        } else if (bet.type === "1-18") {
+          if (winNumber >= 1 && winNumber <= 18) totalWinnings += bet.amount * 2
+        } else if (bet.type === "19-36") {
+          if (winNumber >= 19 && winNumber <= 36) totalWinnings += bet.amount * 2
+        } else if (bet.type === "1-12") {
+          if (winNumber >= 1 && winNumber <= 12) totalWinnings += bet.amount * 3
+        } else if (bet.type === "13-24") {
+          if (winNumber >= 13 && winNumber <= 24) totalWinnings += bet.amount * 3
+        } else if (bet.type === "25-36") {
+          if (winNumber >= 25 && winNumber <= 36) totalWinnings += bet.amount * 3
+        }
+      }
+
+      if (totalWinnings > 0) {
+        setBalance((b) => parseFloat((b + totalWinnings).toFixed(2)))
+      }
+      setLastWin(totalWinnings)
+      setHistory((h) => [{ number: winNumber, color: winColor }, ...h.slice(0, 29)])
+      setBets([])
+      setSpinning(false)
+    }, 4500)
+  }, [spinning, bets, totalBet, balance])
+
+  const segAngle = 360 / ROULETTE_NUMBERS.length
+
+  const betOptions: { type: BetType; label: string; color: string; payout: string }[] = [
+    { type: "red", label: "Красное", color: "#ff4757", payout: "x2" },
+    { type: "black", label: "Чёрное", color: "#1a1a2e", payout: "x2" },
+    { type: "green", label: "Зеро (0)", color: "#2ee06e", payout: "x36" },
+    { type: "odd", label: "Нечёт", color: "#7b8fa3", payout: "x2" },
+    { type: "even", label: "Чёт", color: "#7b8fa3", payout: "x2" },
+    { type: "1-18", label: "1-18", color: "#7b8fa3", payout: "x2" },
+    { type: "19-36", label: "19-36", color: "#7b8fa3", payout: "x2" },
+    { type: "1-12", label: "1-12", color: "#ffd93d", payout: "x3" },
+    { type: "13-24", label: "13-24", color: "#ffd93d", payout: "x3" },
+    { type: "25-36", label: "25-36", color: "#ffd93d", payout: "x3" },
+  ]
+
+  return (
+    <GameLayout title="Roulette" balance={balance}>
+      <div className="flex flex-col gap-4">
+        {/* Roulette Wheel */}
+        <div className="bg-[#0d2818] rounded-2xl border-4 border-[#1a4528] p-4 sm:p-6 flex flex-col items-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+
+          <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px]">
+            {/* Pointer */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-20">
+              <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[24px] border-l-transparent border-r-transparent border-t-[#ffd93d] drop-shadow-lg" />
+            </div>
+
+            <svg viewBox="0 0 320 320" className="w-full h-full drop-shadow-2xl">
+              {/* Outer gold ring */}
+              <circle cx="160" cy="160" r="155" fill="none" stroke="#c4961a" strokeWidth="6" />
+              <circle cx="160" cy="160" r="152" fill="none" stroke="#ffd93d" strokeWidth="1" opacity="0.3" />
+
+              <g
+                style={{
+                  transform: `rotate(${rotation}deg)`,
+                  transformOrigin: "160px 160px",
+                  transition: spinning ? "transform 4.5s cubic-bezier(0.15, 0.65, 0.08, 0.98)" : "none",
+                }}
+              >
+                {ROULETTE_NUMBERS.map((num, i) => {
+                  const startAngle = (i * segAngle * Math.PI) / 180
+                  const endAngle = ((i + 1) * segAngle * Math.PI) / 180
+                  const r = 148
+                  const x1 = 160 + r * Math.cos(startAngle)
+                  const y1 = 160 + r * Math.sin(startAngle)
+                  const x2 = 160 + r * Math.cos(endAngle)
+                  const y2 = 160 + r * Math.sin(endAngle)
+
+                  const midAngle = ((i + 0.5) * segAngle * Math.PI) / 180
+                  const textR = r * 0.78
+                  const tx = 160 + textR * Math.cos(midAngle)
+                  const ty = 160 + textR * Math.sin(midAngle)
+                  const textRot = (i + 0.5) * segAngle + 90
+
+                  return (
+                    <g key={i}>
+                      <path
+                        d={`M 160 160 L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`}
+                        fill={colorMap[getNumberColor(num)]}
+                        stroke="#0d2818"
+                        strokeWidth="0.5"
+                      />
+                      <text
+                        x={tx}
+                        y={ty}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill="white"
+                        fontSize="8"
+                        fontWeight="700"
+                        transform={`rotate(${textRot}, ${tx}, ${ty})`}
+                      >
+                        {num}
+                      </text>
+                    </g>
+                  )
+                })}
+                {/* Inner circle */}
+                <circle cx="160" cy="160" r="45" fill="#0d2818" stroke="#1a4528" strokeWidth="3" />
+                <circle cx="160" cy="160" r="30" fill="#1a4528" />
+                <text x="160" y="160" textAnchor="middle" dominantBaseline="middle" fill="#2ee06e" fontSize="11" fontWeight="800">
+                  PLAID
+                </text>
+              </g>
+            </svg>
+          </div>
+
+          {/* Result */}
+          {result !== null && !spinning && (
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-black text-white border-4"
+                style={{
+                  backgroundColor: colorMap[getNumberColor(result)],
+                  borderColor: getNumberColor(result) === "green" ? "#2ee06e" : getNumberColor(result) === "red" ? "#ff4757" : "#555",
+                }}
+              >
+                {result}
+              </div>
+              {lastWin !== null && (
+                <span className={`text-lg font-bold ${lastWin > 0 ? "text-[#2ee06e]" : "text-[#ff4757]"}`}>
+                  {lastWin > 0 ? `+${(lastWin - totalBet).toFixed(2)} ₽` : `-${totalBet.toFixed(2)} ₽`}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* History Strip */}
+        {history.length > 0 && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1 px-1">
+            {history.slice(0, 20).map((h, i) => (
+              <div
+                key={i}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                style={{ backgroundColor: colorMap[h.color as keyof typeof colorMap] }}
+              >
+                {h.number}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Bet Selection */}
+        <div className="bg-card rounded-xl border border-border/50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-foreground">Ставки</p>
+            {bets.length > 0 && (
+              <button onClick={clearBets} className="text-xs text-destructive hover:text-destructive/80 font-medium">
+                Очистить
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-5 gap-2 mb-3">
+            {betOptions.map((opt) => (
+              <button
+                key={String(opt.type)}
+                onClick={() => setSelectedBetType(opt.type)}
+                disabled={spinning}
+                className={`flex flex-col items-center gap-0.5 p-2 rounded-lg border-2 transition-all text-center ${
+                  selectedBetType === opt.type
+                    ? "border-[#2ee06e] bg-[#2ee06e]/10"
+                    : "border-border hover:border-border/80 bg-secondary"
+                }`}
+              >
+                {(opt.type === "red" || opt.type === "black" || opt.type === "green") && (
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: opt.color }} />
+                )}
+                <span className="text-[10px] font-medium text-foreground leading-tight">{opt.label}</span>
+                <span className="text-[9px] text-muted-foreground">{opt.payout}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Active Bets */}
+          {bets.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {bets.map((bet, i) => (
+                <div key={i} className="bg-secondary px-2 py-1 rounded text-xs font-medium text-foreground">
+                  {String(bet.type)}: {bet.amount} ₽
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Bet Amount */}
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Сумма ставки</label>
+            <div className="flex items-center bg-secondary rounded-lg overflow-hidden">
+              <input
+                type="number"
+                value={betAmount}
+                onChange={(e) => setBetAmount(Math.max(1, parseFloat(e.target.value) || 0))}
+                className="flex-1 bg-transparent text-sm font-medium text-foreground px-3 py-2.5 outline-none min-w-0"
+                disabled={spinning}
+              />
+              <button
+                onClick={() => setBetAmount((b) => Math.max(1, parseFloat((b / 2).toFixed(2))))}
+                className="px-2 py-2.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                /2
+              </button>
+              <button
+                onClick={() => setBetAmount((b) => Math.min(parseFloat((b * 2).toFixed(2)), balance))}
+                className="px-2 py-2.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                x2
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <button
+              onClick={placeBet}
+              disabled={spinning || betAmount <= 0 || betAmount > balance}
+              className="bg-[#ffd93d] hover:bg-[#f5cc1b] disabled:bg-secondary disabled:text-muted-foreground text-[#0f1923] font-bold text-sm py-3 rounded-xl transition-all"
+            >
+              Поставить
+            </button>
+            <button
+              onClick={spin}
+              disabled={spinning || bets.length === 0 || totalBet > balance}
+              className="bg-[#2ee06e] hover:bg-[#25c45c] disabled:bg-secondary disabled:text-muted-foreground text-[#0f1923] font-bold text-sm py-3 rounded-xl transition-all glow-green"
+            >
+              {spinning ? "Вращение..." : `Крутить (${totalBet} ₽)`}
+            </button>
+          </div>
+        </div>
+      </div>
+    </GameLayout>
+  )
+}
