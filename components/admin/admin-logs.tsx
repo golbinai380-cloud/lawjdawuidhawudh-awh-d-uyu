@@ -5,18 +5,18 @@ import { useState } from "react"
 type LogType = "all" | "deposits" | "wins" | "losses"
 
 const logs = [
-  { id: 1, type: "deposit", user: "Player_4821", game: "СБП", amount: 5000, time: "2026-03-04 14:32" },
-  { id: 2, type: "win", user: "Player_6629", game: "Dice", amount: 1200, time: "2026-03-04 14:28" },
-  { id: 3, type: "loss", user: "Player_9103", game: "Mines", amount: -500, time: "2026-03-04 14:25" },
-  { id: 4, type: "win", user: "Player_7788", game: "Wheel", amount: 3500, time: "2026-03-04 14:20" },
-  { id: 5, type: "deposit", user: "Player_3345", game: "TON", amount: 2000, time: "2026-03-04 14:15" },
-  { id: 6, type: "loss", user: "Player_2210", game: "Dice", amount: -300, time: "2026-03-04 14:10" },
-  { id: 7, type: "win", user: "Player_5544", game: "BlackJack", amount: 800, time: "2026-03-04 14:05" },
-  { id: 8, type: "loss", user: "Player_4821", game: "Roulette", amount: -1500, time: "2026-03-04 14:00" },
-  { id: 9, type: "deposit", user: "Player_7788", game: "СБП", amount: 10000, time: "2026-03-04 13:55" },
-  { id: 10, type: "win", user: "Player_9103", game: "Plinko", amount: 2200, time: "2026-03-04 13:50" },
-  { id: 11, type: "loss", user: "Player_6629", game: "Mines", amount: -700, time: "2026-03-04 13:45" },
-  { id: 12, type: "win", user: "Player_3345", game: "Bubbles", amount: 450, time: "2026-03-04 13:40" },
+  { id: 1, type: "deposit", telegramId: 1847293651, username: "@alexplay_777", game: "СБП", amount: 5000, time: "2026-03-04 14:32" },
+  { id: 2, type: "win", telegramId: 7384920163, username: "@spinmaster_pro", game: "Dice", amount: 1200, time: "2026-03-04 14:28" },
+  { id: 3, type: "loss", telegramId: 928374651, username: "@lucky_winner_ru", game: "Mines", amount: -500, time: "2026-03-04 14:25" },
+  { id: 4, type: "win", telegramId: 1029384756, username: "@vip_gambler", game: "Wheel", amount: 3500, time: "2026-03-04 14:20" },
+  { id: 5, type: "deposit", telegramId: 5938274610, username: "@dice_king_2024", game: "TON", amount: 2000, time: "2026-03-04 14:15" },
+  { id: 6, type: "loss", telegramId: 8192736450, username: null, game: "Dice", amount: -300, time: "2026-03-04 14:10" },
+  { id: 7, type: "win", telegramId: 6029384751, username: "@wheel_fan", game: "BlackJack", amount: 800, time: "2026-03-04 14:05" },
+  { id: 8, type: "loss", telegramId: 1847293651, username: "@alexplay_777", game: "Roulette", amount: -1500, time: "2026-03-04 14:00" },
+  { id: 9, type: "deposit", telegramId: 1029384756, username: "@vip_gambler", game: "СБП", amount: 10000, time: "2026-03-04 13:55" },
+  { id: 10, type: "win", telegramId: 928374651, username: "@lucky_winner_ru", game: "Plinko", amount: 2200, time: "2026-03-04 13:50" },
+  { id: 11, type: "loss", telegramId: 7384920163, username: "@spinmaster_pro", game: "Mines", amount: -700, time: "2026-03-04 13:45" },
+  { id: 12, type: "win", telegramId: 5938274610, username: "@dice_king_2024", game: "Aviatrix", amount: 450, time: "2026-03-04 13:40" },
 ]
 
 const filterTabs: { id: LogType; label: string }[] = [
@@ -63,7 +63,8 @@ export default function AdminLogs() {
             <thead>
               <tr className="bg-secondary/50">
                 <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Тип</th>
-                <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Игрок</th>
+                <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Telegram ID</th>
+                <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Username</th>
                 <th className="text-left px-3 py-2.5 text-xs font-medium text-muted-foreground">Игра/Метод</th>
                 <th className="text-right px-3 py-2.5 text-xs font-medium text-muted-foreground">Сумма</th>
                 <th className="text-right px-3 py-2.5 text-xs font-medium text-muted-foreground">Время</th>
@@ -85,7 +86,21 @@ export default function AdminLogs() {
                       {log.type === "deposit" ? "Депозит" : log.type === "win" ? "Выигрыш" : "Проигрыш"}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 font-medium text-foreground">{log.user}</td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-[#2aabee]">{log.telegramId}</td>
+                  <td className="px-3 py-2.5 font-medium text-foreground">
+                    {log.username ? (
+                      <a 
+                        href={`https://t.me/${log.username.replace('@', '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[#2aabee] hover:underline"
+                      >
+                        {log.username}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2.5 text-muted-foreground">{log.game}</td>
                   <td
                     className={`px-3 py-2.5 text-right font-semibold ${

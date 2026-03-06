@@ -19,11 +19,11 @@ export default function ReferralPage() {
   }
 
   const referrals = [
-    { username: "Player_4821", deposited: 5000, earned: 500, date: "2026-02-28" },
-    { username: "Player_9103", deposited: 3000, earned: 300, date: "2026-02-25" },
-    { username: "Player_1447", deposited: 2000, earned: 200, date: "2026-02-20" },
-    { username: "Player_6629", deposited: 1500, earned: 150, date: "2026-02-18" },
-    { username: "Player_3345", deposited: 1000, earned: 100, date: "2026-02-15" },
+    { username: "@alexplay_777", deposited: 5000, earned: 500, date: "2026-02-28" },
+    { username: "@lucky_winner_ru", deposited: 3000, earned: 300, date: "2026-02-25" },
+    { username: "-", deposited: 2000, earned: 200, date: "2026-02-20" },
+    { username: "@spinmaster_pro", deposited: 1500, earned: 150, date: "2026-02-18" },
+    { username: "@dice_king_2024", deposited: 1000, earned: 100, date: "2026-02-15" },
   ]
 
   const copyLink = () => {
@@ -36,7 +36,7 @@ export default function ReferralPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-4 flex flex-col gap-4">
-        <h1 className="text-xl font-bold text-foreground">Реферальная программа</h1>
+        <h1 className="text-xl font-bold text-foreground">{"Реферальная программа"}</h1>
 
         {/* Info Banner */}
         <div className="bg-gradient-to-r from-[#ffd93d]/20 to-[#e17055]/20 rounded-xl border border-[#ffd93d]/30 p-6">
