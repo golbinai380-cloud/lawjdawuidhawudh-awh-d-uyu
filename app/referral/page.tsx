@@ -41,17 +41,16 @@ export default function ReferralPage() {
         {/* Info Banner */}
         <div className="bg-gradient-to-r from-[#ffd93d]/20 to-[#e17055]/20 rounded-xl border border-[#ffd93d]/30 p-6">
           <h2 className="text-lg font-bold text-foreground mb-1">
-            Получайте 10% с каждого депозита!
+            {"Получайте 10% с каждого депозита!"}
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Приглашайте друзей по вашей реферальной ссылке. Вы получите 10% от суммы каждого их
-            пополнения навсегда.
+            {"Приглашайте друзей по вашей реферальной ссылке. Вы получите 10% от суммы каждого их пополнения навсегда."}
           </p>
         </div>
 
         {/* Referral Link */}
         <div className="bg-card rounded-xl border border-border/50 p-4">
-          <p className="text-sm font-medium text-foreground mb-2">Ваша реферальная ссылка</p>
+          <p className="text-sm font-medium text-foreground mb-2">{"Ваша реферальная ссылка"}</p>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-secondary rounded-lg px-3 py-2.5 text-sm text-foreground/80 truncate">
               {referralLink}
@@ -65,7 +64,7 @@ export default function ReferralPage() {
             </button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Код: <span className="font-semibold text-foreground">{referralCode}</span>
+            {"Код: "}<span className="font-semibold text-foreground">{referralCode}</span>
           </p>
         </div>
 
@@ -73,37 +72,37 @@ export default function ReferralPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-card rounded-xl border border-border/50 p-4 text-center">
             <Users className="w-5 h-5 text-[#00b4d8] mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Рефералов</p>
+            <p className="text-xs text-muted-foreground">{"Рефералов"}</p>
             <p className="text-lg font-bold text-foreground">{stats.totalReferrals}</p>
           </div>
           <div className="bg-card rounded-xl border border-border/50 p-4 text-center">
             <Users className="w-5 h-5 text-[#2ee06e] mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Активных</p>
+            <p className="text-xs text-muted-foreground">{"Активных"}</p>
             <p className="text-lg font-bold text-[#2ee06e]">{stats.activeReferrals}</p>
           </div>
           <div className="bg-card rounded-xl border border-border/50 p-4 text-center">
             <TrendingUp className="w-5 h-5 text-[#ffd93d] mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Заработано</p>
+            <p className="text-xs text-muted-foreground">{"Заработано"}</p>
             <p className="text-lg font-bold text-[#ffd93d]">{stats.totalEarned.toFixed(0)} ₽</p>
           </div>
           <div className="bg-card rounded-xl border border-border/50 p-4 text-center">
             <DollarSign className="w-5 h-5 text-[#e17055] mx-auto mb-1" />
-            <p className="text-xs text-muted-foreground">Ожидается</p>
+            <p className="text-xs text-muted-foreground">{"Ожидается"}</p>
             <p className="text-lg font-bold text-[#e17055]">{stats.pendingEarnings.toFixed(0)} ₽</p>
           </div>
         </div>
 
         {/* Referral Table */}
         <div className="bg-card rounded-xl border border-border/50 p-4">
-          <h2 className="text-sm font-semibold text-foreground mb-3">Ваши рефералы</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">{"Ваши рефералы"}</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-muted-foreground border-b border-border">
-                  <th className="text-left py-2 font-medium">Игрок</th>
-                  <th className="text-right py-2 font-medium">Депозиты</th>
-                  <th className="text-right py-2 font-medium">Ваш доход</th>
-                  <th className="text-right py-2 font-medium">Дата</th>
+                  <th className="text-left py-2 font-medium">{"Игрок"}</th>
+                  <th className="text-right py-2 font-medium">{"Депозиты"}</th>
+                  <th className="text-right py-2 font-medium">{"Ваш доход"}</th>
+                  <th className="text-right py-2 font-medium">{"Дата"}</th>
                 </tr>
               </thead>
               <tbody>
